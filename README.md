@@ -1,0 +1,1 @@
+# ufsm-2026-2-organizacao-de-computadores-trabalho01
