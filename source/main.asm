@@ -1,3 +1,9 @@
+# ==========================================================
+# ELC1011 - Trabalho 1: criptografia S-AES em assembly MIPS
+# Programa: menu, leitura de nomes de arquivo e senha,
+#           abertura do arquivo de entrada
+# ==========================================================
+
 .data
 
 # ----- Mensagens -----
@@ -22,20 +28,16 @@ men_vazio:
     .asciiz "Entrada vazia, tente novamente\n"
 
 men_nome_arquivo_entrada:
-    .asciiz "Digite o nome do arquivo de entrada:\n"
+    .asciiz "Digite o nome do arquivo de entrada: "
 
 men_nome_arquivo_saida:
-    .asciiz "Digite o nome do arquivo de saida\n"
+    .asciiz "Digite o nome do arquivo de saida: "
 
 men_senha:
-    .asciiz "Digite a senha\n"
+    .asciiz "Digite a senha: "
 
-# usados so na depuracao dos textos lidos
-texto_abre_colchete:
-    .asciiz "["
-
-texto_fecha_colchete:
-    .asciiz "]\n"
+men_arquivo_nao_encontrado:
+    .asciiz "Arquivo nao encontrado\n"
 
 # ----- Variaveis -----
 
@@ -51,53 +53,58 @@ var_arquivo_saida:
 var_senha:
     .space 64
 
+# ----- Buffers dos arquivos -----
+
+arq_conteudo_entrada:
+    .space 1048576                  # 1 MB
+
+arq_conteudo_saida:
+    .space 1048576                  # 1 MB
+
 .text
 .globl main
 
-# ----- Programa principal -----
+# ----- main -----
+# descricao: fluxo principal do programa
+# registradores salvos: $s0 = opcao do menu, $s1 = fd do arquivo de entrada
 
 main:
-
-    # Mostra o menu principal
-
     jal mostrar_menu                # $v0 = opcao escolhida (1 ou 2)
     move $s0, $v0                   # $s0 guarda a opcao para o resto do programa
 
-    # Pede o nome do arquivo de input
-
-    la $a0, men_nome_arquivo_entrada
+    la $a0, men_nome_arquivo_entrada    # pede o nome do arquivo de entrada
     la $a1, var_arquivo_entrada
     li $a2, 100
     jal pedir_texto
 
-    # Pede o nome do arquivo de output
-
-    la $a0, men_nome_arquivo_saida
+    la $a0, men_nome_arquivo_saida      # pede o nome do arquivo de saida
     la $a1, var_arquivo_saida
     li $a2, 100
     jal pedir_texto
 
-    # Pede a senha
-
-    la $a0, men_senha
+    la $a0, men_senha                   # pede a senha
     la $a1, var_senha
     li $a2, 64
     jal pedir_texto
 
-    la $a0, var_arquivo_entrada     # depuracao: mostra [texto] de cada leitura
-    jal depurar_texto
-    la $a0, var_arquivo_saida
-    jal depurar_texto
-    la $a0, var_senha
-    jal depurar_texto
+    la $a0, var_arquivo_entrada         # abre o arquivo de entrada para leitura
+    li $a1, 0
+    jal abrir_arquivo
+    move $s1, $v0                       # $s1 = fd do arquivo de entrada
 
-    li $v0, 10                      # syscall 10: encerra o programa
+    j fim_programa
+
+# ----- fim_programa -----
+# descricao: encerra o programa
+
+fim_programa:
+    li $v0, 10                      # syscall 10: exit
     syscall
 
 # ----- mostrar_menu -----
 # entrada: nenhuma
 # saida:   $v0 = 1 (criptografar) ou 2 (descriptografar)
-# repete o menu ate a pessoa digitar uma opcao valida
+# descricao: repete o menu ate a pessoa digitar uma opcao valida
 
 mostrar_menu:
 menu_repetir:
@@ -152,9 +159,8 @@ menu_fim:
 # ----- pedir_texto -----
 # entrada: $a0 = endereco da mensagem, $a1 = endereco do buffer, $a2 = tamanho maximo
 # saida:   texto digitado no buffer, sem o '\n' e nunca vazio
-# repete o pedido enquanto o texto vier vazio
-# usa $s0 a $s2 para guardar os argumentos durante o laco, entao salva
-# os valores antigos deles (e o $ra) na pilha e restaura no final
+# descricao: repete o pedido enquanto o texto vier vazio
+# registradores salvos: $ra, $s0 a $s2 (guardados na pilha e restaurados no final)
 
 pedir_texto:
     addi $sp, $sp, -16
@@ -199,6 +205,7 @@ pedir_fim:
 # ----- tirar_barra_n -----
 # entrada: $a0 = endereco do texto
 # saida:   o primeiro '\n' do texto vira \0
+# descricao: percorre o texto ate achar '\n' ou o fim; altera $a0
 
 tirar_barra_n:
     li $t2, 10                      # $t2 = '\n', fica fixo durante o laco
@@ -216,23 +223,22 @@ tirar_trocar:
 tirar_fim:
     jr $ra
 
-# ----- depurar_texto -----
-# entrada: $a0 = endereco do texto
-# saida:   imprime [texto] na tela
+# ----- abrir_arquivo -----
+# entrada: $a0 = endereco do nome do arquivo, $a1 = flag (0 = leitura, 1 = escrita)
+# saida:   $v0 = descritor do arquivo (fd)
+# descricao: se o arquivo nao abrir, avisa e encerra o programa
 
-depurar_texto:
-    move $t0, $a0                   # guarda o texto antes de usar $a0 nas syscalls
-
-    li $v0, 4
-    la $a0, texto_abre_colchete
+abrir_arquivo:
+    li $v0, 13                      # syscall 13: open_file
+    li $a2, 0                       # modo (ignorado pelo MARS)
     syscall
 
-    li $v0, 4
-    move $a0, $t0
-    syscall
-
-    li $v0, 4
-    la $a0, texto_fecha_colchete
-    syscall
-
+    bltz $v0, abrir_arquivo_erro    # fd negativo: nao abriu
     jr $ra
+
+abrir_arquivo_erro:
+    li $v0, 4
+    la $a0, men_arquivo_nao_encontrado
+    syscall
+
+    j fim_programa
