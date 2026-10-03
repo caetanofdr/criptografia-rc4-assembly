@@ -66,7 +66,8 @@ arq_conteudo_saida:
 
 # ----- main -----
 # descricao: fluxo principal do programa
-# registradores salvos: $s0 = opcao do menu, $s1 = fd do arquivo de entrada
+# registradores salvos: $s0 = opcao do menu, $s1 = fd do arquivo de entrada,
+#                       $s2 = bytes lidos, $s3 = fd do arquivo de saida
 
 main:
     jal mostrar_menu                # $v0 = opcao escolhida (1 ou 2)
@@ -98,12 +99,15 @@ main:
     jal ler_arquivo
     move $s2, $v0                       # $s2 = bytes lidos
 
-    la $t0, arq_conteudo_entrada
-    add $t0, $t0, $s2
-    sb $zero, 0($t0)
-    li $v0, 4
-    la $a0, arq_conteudo_entrada
-    syscall
+    la $a0, var_arquivo_saida           # abre o arquivo de saida para escrita
+    li $a1, 1
+    jal abrir_arquivo
+    move $s3, $v0                       # $s3 = fd do arquivo de saida
+
+    move $a0, $s3                       # fd do arquivo de saida
+    la $a1, arq_conteudo_entrada        # buffer a gravar (teste: copia sem cifrar)
+    move $a2, $s2                       # quantidade de bytes lidos
+    jal escrever_arquivo
 
     j fim_programa
 
@@ -271,4 +275,18 @@ ler_arquivo:
     syscall
 
     move $v0, $t0
+    jr $ra
+
+# ----- escrever_arquivo -----
+# entrada: $a0 = fd, $a1 = endereco do buffer, $a2 = quantidade de bytes
+# saida:   nenhuma
+# descricao: grava o buffer no arquivo e fecha o arquivo
+
+escrever_arquivo:
+    li $v0, 15
+    syscall
+
+    li $v0, 16
+    syscall
+
     jr $ra
