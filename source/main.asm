@@ -92,6 +92,19 @@ main:
     jal abrir_arquivo
     move $s1, $v0                       # $s1 = fd do arquivo de entrada
 
+    move $a0, $s1                       # fd do arquivo de entrada
+    la $a1, arq_conteudo_entrada        # buffer de destino
+    li $a2, 1048576                     # tamanho maximo da leitura
+    jal ler_arquivo
+    move $s2, $v0                       # $s2 = bytes lidos
+
+    la $t0, arq_conteudo_entrada
+    add $t0, $t0, $s2
+    sb $zero, 0($t0)
+    li $v0, 4
+    la $a0, arq_conteudo_entrada
+    syscall
+
     j fim_programa
 
 # ----- fim_programa -----
@@ -242,3 +255,20 @@ abrir_arquivo_erro:
     syscall
 
     j fim_programa
+
+# ----- ler_arquivo -----
+# entrada: $a0 = fd, $a1 = endereco do buffer, $a2 = tamanho maximo
+# saida:   $v0 = quantidade de bytes lidos
+# descricao: le o arquivo para o buffer e fecha o arquivo
+
+ler_arquivo:
+    li $v0, 14
+    syscall
+
+    move $t0, $v0
+
+    li $v0, 16
+    syscall
+
+    move $v0, $t0
+    jr $ra
