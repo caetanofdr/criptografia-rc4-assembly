@@ -2,6 +2,8 @@
 # ELC1011 - Trabalho 1: criptografia RC4 em assembly MIPS
 # Programa: menu, leitura de nomes de arquivo e senha,
 #           criptografia e descriptografia de arquivos (RC4)
+# Autores:  Andrei Ribeiro e Caetano Facco da Rosa
+# Professor: Giovani Baratto
 # ==========================================================
 
 .data
@@ -73,11 +75,11 @@ vetor_estado:
 # descricao: fluxo principal do programa; o RC4 e uma cifra de fluxo (XOR com uma
 #            sequencia gerada pela senha), entao criptografar e descriptografar sao
 #            a mesma operacao e a opcao do menu so muda a mensagem mostrada
-# registradores salvos: $s1 = fd do arquivo de entrada, $s2 = tamanho dos dados lidos,
+# registradores usados: $s1 = fd do arquivo de entrada, $s2 = tamanho dos dados lidos,
 #                       $s3 = fd do arquivo de saida
 
 main:
-    jal mostrar_menu                    # $v0 = opcao escolhida (1 ou 2)
+    jal mostrar_menu                    # $v0 = opcao escolhida (1 ou 2), nao usada depois
 
     la $a0, men_nome_arquivo_entrada    # pede o nome do arquivo de entrada
     la $a1, var_arquivo_entrada
@@ -137,11 +139,11 @@ fim_programa:
 
 mostrar_menu:
 menu_repetir:
-    li $v0, 4
+    li $v0, 4                       # syscall 4: print_string
     la $a0, menu
     syscall
 
-    li $v0, 8                       # le a opcao como texto
+    li $v0, 8                       # syscall 8: read_string (le a opcao como texto)
     la $a0, var_opcao
     li $a1, 16
     syscall
@@ -203,11 +205,11 @@ pedir_texto:
     move $s2, $a2                   # $s2 = tamanho maximo
 
 pedir_repetir:
-    li $v0, 4                       # imprime a mensagem
+    li $v0, 4                       # syscall 4: print_string (imprime a mensagem)
     move $a0, $s0
     syscall
 
-    li $v0, 8                       # le o texto digitado
+    li $v0, 8                       # syscall 8: read_string (le o texto digitado)
     move $a0, $s1
     move $a1, $s2
     syscall
