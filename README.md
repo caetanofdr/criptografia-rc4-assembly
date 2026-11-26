@@ -18,7 +18,7 @@ A proposta da disciplina era desenvolver, em assembly MIPS para o simulador MARS
 
 Cada equipe implementava apenas um algoritmo: **RC4** ou **S-AES** (*Simplified AES*). A escolha seguia uma regra: somavam-se os dois últimos dígitos da matrícula de cada integrante; soma par levava ao RC4 e soma ímpar ao S-AES. A soma da nossa dupla foi par, por isso este repositório implementa o RC4.
 
-Para validar o programa, era preciso cifrar dois arquivos de texto fornecidos pelo professor com a chave `ELC1011`, decifrá-los em seguida e conferir se o conteúdo voltava idêntico ao original.
+Para validar o programa, era preciso cifrar dois arquivos de texto com a chave `ELC1011`, decifrá-los em seguida e conferir se o conteúdo voltava idêntico ao original.
 
 ## Funcionalidades
 
